@@ -1,0 +1,10 @@
+# Python
+.idea/
+__pycache__/
+venv/
+
+# Frequency lists
+*.zip
+*.csv
+*.tsv
+*.pdf
