@@ -7,8 +7,13 @@ HIRAGANA = re.compile(r"[ぁ-ゖ]")
 KATAKANA = re.compile(r"[ァ-ヺ]")
 KANJI = re.compile(r"[\u4E00-\u9FFF\u3400-\u4DBF\u20000-\u2A6DF]")
 
-@dataclass
+@dataclass(frozen=True)
 class Term:
+    """
+    Japanese term with reading.
+
+    Instances of this class are immutable.
+    """
     text: str
     """
     The text for the term.
@@ -18,13 +23,14 @@ class Term:
     Reading of the term, or an empty string if the reading is the same as the term.
     """
 
-    def __hash__(self) -> hash:
-        return hash((self.text, self.reading))
+    def __repr__(self) -> str:
+        return f"{self.text}[{self.reading}]"
 
     def with_default_reading(self) -> "Term":
         if not self.reading:
-            self.reading = self.text
-        return self
+            return Term(self.text, self.text)
+        else:
+            return self
 
     def with_kanji_repetition_marks(self) -> "Optional[Term]":
         new_text = add_repetition_marks(self.text, KANJI, "々")
@@ -82,3 +88,12 @@ class TestTerm(unittest.TestCase):
             term_with_marks = Term(with_marks, reading)
             self.assertEqual(term_without_marks.with_kanji_repetition_marks(), term_with_marks)
             self.assertEqual(term_with_marks.without_kanji_repetition_marks(), term_without_marks)
+
+    def test_impl(self):
+        a = Term("ア", "あ")
+        i = Term("イ", "い")
+
+        self.assertEqual(a, a)
+        self.assertNotEqual(a, i)
+        self.assertEqual(hash(a), hash(a))
+        self.assertNotEqual(hash(a), hash(i))
