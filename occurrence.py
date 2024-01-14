@@ -7,8 +7,13 @@ import conversion
 from term import Term
 
 
-@dataclass
+@dataclass(frozen=True)
 class Occurrence:
+    """
+    Occurrence of a term in a textual source.
+
+    Instances of this class are immutable.
+    """
     term: Term
     """
     The term itself.
@@ -18,8 +23,19 @@ class Occurrence:
     Source in which the term occurred.
     """
 
-    def __hash__(self) -> hash:
-        return hash((self.term, self.provenance))
+    def __repr__(self) -> str:
+        return f"{self.term}@{self.provenance}"
+
+
+class TestOccurrence(unittest.TestCase):
+    def test_impl(self):
+        a = Occurrence(Term("ア", "あ"), "ある出所")
+        b = Occurrence(Term("ア", "あ"), "違う出所")
+
+        self.assertEqual(a, a)
+        self.assertNotEqual(a, b)
+        self.assertEqual(hash(a), hash(a))
+        self.assertNotEqual(hash(a), hash(b))
 
 
 class OccurrenceBag:
