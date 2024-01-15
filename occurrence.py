@@ -66,7 +66,7 @@ class OccurrenceBag:
                 self.data[term][source] = total_count
 
     def to_counts(self) -> Dict[Term, int]:
-        counts = defaultdict(int)
+        counts: Dict[Term, int] = defaultdict(int)
         for term in self.data:
             for n in self.data[term].values():
                 counts[term] += n
