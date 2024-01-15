@@ -65,6 +65,13 @@ class OccurrenceBag:
                 total_count = max(self.data[term][source], other.data[term][source])
                 self.data[term][source] = total_count
 
+    def to_counts(self) -> Dict[Term, int]:
+        counts = defaultdict(int)
+        for term in self.data:
+            for n in self.data[term].values():
+                counts[term] += n
+        return counts
+
 
 class OccurrenceReader:
     zip_path: str
@@ -188,3 +195,13 @@ class TestOccurrenceBag(unittest.TestCase):
         self.assertEqual(a.get(Occurrence(Term("ア", "あ"), "ある出所")), 10)
         self.assertEqual(a.get(Occurrence(Term("ア", "あ"), "違う出所")), 5)
         self.assertEqual(a.get(Occurrence(Term("イ", "い"), "ある出所")), 5)
+
+    def test_to_counts(self):
+        a = OccurrenceBag()
+        a.insert(Occurrence(Term("ア", "あ"), "ある出所"), 10)
+        a.insert(Occurrence(Term("ア", "あ"), "違う出所"), 5)
+        a.insert(Occurrence(Term("イ", "い"), "ある出所"), 5)
+
+        counts = a.to_counts()
+        self.assertEqual(counts.get(Term("ア", "あ")), 15)
+        self.assertEqual(counts.get(Term("イ", "い")), 5)
