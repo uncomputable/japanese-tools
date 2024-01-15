@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Iterator
 from zipfile import ZipFile, ZIP_DEFLATED
 import json
 import unittest
@@ -122,8 +122,11 @@ class Dictionary:
     revision: str
     data: List[Definition]
 
-    def iter(self) -> List[Definition]:
-        return self.data
+    def __iter__(self) -> Iterator[Definition]:
+        return iter(self.data)
+
+    def __len__(self) -> int:
+        return len(self.data)
 
     def writer(self) -> "DictionaryWriter":
         return DictionaryWriter(self)
@@ -211,12 +214,12 @@ class DictionaryWriter:
 
 class TestDictionary(unittest.TestCase):
     def test_read(self):
-        definitions = DictionaryReader() \
+        dictionary = DictionaryReader() \
             .with_path("../self-made-yomichan/新新明解.zip") \
             .read()
-        self.assertEquals(82414, len(definitions.iter()))
+        self.assertEquals(82414, len(dictionary))
 
-        abnormal = list(filter(lambda x: not x.is_normal(), definitions.iter()))
+        abnormal = list(filter(lambda x: not x.is_normal(), iter(dictionary)))
         self.assertEquals(0, len(abnormal))
 
     def test_read_write(self):
