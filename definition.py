@@ -54,9 +54,6 @@ class Definition:
     An empty string is treated as no tags.
     """
 
-    def __repr__(self) -> str:
-        return repr(self.term)
-
     def get_definition(self) -> str:
         return self.definitions[0]
 
