@@ -59,6 +59,12 @@ class OccurrenceBag:
     def __len__(self) -> int:
         return len(self.data)
 
+    def extend_conservative(self, other: "OccurrenceBag"):
+        for term in other.data:
+            for source in other.data[term]:
+                total_count = max(self.data[term][source], other.data[term][source])
+                self.data[term][source] = total_count
+
 
 class OccurrenceReader:
     zip_path: str
@@ -168,3 +174,17 @@ class TestOccurrenceBag(unittest.TestCase):
             .with_count_index(6) \
             .read()
         self.assertEqual(175634, len(occurrences))
+
+    def test_extend_conservative(self):
+        a = OccurrenceBag()
+        a.insert(Occurrence(Term("ア", "あ"), "ある出所"), 10)
+        a.insert(Occurrence(Term("イ", "い"), "ある出所"), 5)
+
+        b = OccurrenceBag()
+        b.insert(Occurrence(Term("ア", "あ"), "ある出所"), 5)
+        b.insert(Occurrence(Term("ア", "あ"), "違う出所"), 5)
+
+        a.extend_conservative(b)
+        self.assertEqual(a.get(Occurrence(Term("ア", "あ"), "ある出所")), 10)
+        self.assertEqual(a.get(Occurrence(Term("ア", "あ"), "違う出所")), 5)
+        self.assertEqual(a.get(Occurrence(Term("イ", "い"), "ある出所")), 5)
