@@ -167,6 +167,11 @@ class DictionaryReader:
 class DictionaryWriter:
     title: Optional[str]
     revision: Optional[str]
+    author: Optional[str]
+    url: Optional[str]
+    description: Optional[str]
+    attribution: Optional[str]
+
     path: Optional[str]
     chunk_size: int
 
@@ -174,6 +179,10 @@ class DictionaryWriter:
         self.data = data
         self.title = None
         self.revision = None
+        self.author = None
+        self.url = None
+        self.description = None
+        self.attribution = None
 
         self.path = None
         self.chunk_size = len(data)
@@ -184,6 +193,22 @@ class DictionaryWriter:
 
     def with_revision(self, revision: str) -> "DictionaryWriter":
         self.revision = revision
+        return self
+
+    def with_author(self, author: str) -> "DictionaryWriter":
+        self.author = author
+        return self
+
+    def with_url(self, url: str) -> "DictionaryWriter":
+        self.url = url
+        return self
+
+    def with_description(self, description: str) -> "DictionaryWriter":
+        self.description = description
+        return self
+
+    def with_attribution(self, attribution: str) -> "DictionaryWriter":
+        self.attribution = attribution
         return self
 
     def with_path(self, path: str) -> "DictionaryWriter":
@@ -209,6 +234,14 @@ class DictionaryWriter:
                 "revision": self.revision,
                 "sequenced": True,
             }
+            if self.author is not None:
+                index_obj["author"] = self.author
+            if self.url is not None:
+                index_obj["url"] = self.url
+            if self.description is not None:
+                index_obj["description"] = self.description
+            if self.attribution is not None:
+                index_obj["attribution"] = self.attribution
 
             json_str = json.dumps(index_obj, ensure_ascii=False)
             zip_file.writestr("index.json", json_str)
@@ -244,6 +277,7 @@ class TestDictionary(unittest.TestCase):
         DictionaryWriter(data) \
             .with_title("新新明解") \
             .with_revision("超銀河版") \
+            .with_author("グレン団") \
             .with_path("shinmeikai.zip") \
             .in_chunks(10000) \
             .write()
