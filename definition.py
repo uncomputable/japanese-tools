@@ -57,6 +57,17 @@ class Definition:
     def get_definition(self) -> str:
         return self.definitions[0]
 
+    def with_term(self, term: Term) -> "Definition":
+        return Definition(
+            term,
+            self.def_tags,
+            self.conjugation,
+            self.popularity,
+            self.definitions,
+            self.sequence_number,
+            self.top_tags
+        )
+
     def with_sequence(self, sequence: int) -> "Definition":
         return Definition(
             self.term,
@@ -65,6 +76,17 @@ class Definition:
             self.popularity,
             self.definitions,
             sequence,
+            self.top_tags
+        )
+
+    def with_popularity(self, popularity: int) -> "Definition":
+        return Definition(
+            self.term,
+            self.def_tags,
+            self.conjugation,
+            popularity,
+            self.definitions,
+            self.sequence_number,
             self.top_tags
         )
 
@@ -81,7 +103,7 @@ class Definition:
         )
 
     def is_normal(self) -> bool:
-        return self.top_tags == "" and self.popularity == 0 and len(self.definitions) == 1
+        return self.top_tags == "" and len(self.definitions) == 1
 
     @classmethod
     def from_json(cls, obj: List[Any]) -> "Definition":
