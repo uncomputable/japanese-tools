@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import total_ordering
 from typing import Optional
 import re
 import unittest
@@ -8,6 +9,7 @@ KATAKANA = re.compile(r"[ァ-ヺ]")
 KANJI = re.compile(r"[\u4E00-\u9FFF\u3400-\u4DBF\u20000-\u2A6DF]")
 
 @dataclass(frozen=True)
+@total_ordering
 class Term:
     """
     Japanese term with reading.
@@ -25,6 +27,9 @@ class Term:
 
     def __repr__(self) -> str:
         return f"{self.text}[{self.reading}]"
+
+    def __lt__(self, other: "Term") -> bool:
+        return (self.reading, self.text) < (other.reading, other.text)
 
     def with_default_reading(self) -> "Term":
         if not self.reading:
