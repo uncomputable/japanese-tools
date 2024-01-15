@@ -39,19 +39,22 @@ class TestOccurrence(unittest.TestCase):
 
 
 class OccurrenceBag:
-    data: Dict[Occurrence, int]
+    data: Dict[Term, Dict[str, int]]
     """
     Maps occurrences to their count.
+
+    Terms are mapped to their sources.
+    Sources are in turn mapped to the term count.
     """
 
     def __init__(self):
-        self.data = defaultdict(int)
+        self.data = defaultdict(lambda: defaultdict(int))
 
     def insert(self, occurrence: Occurrence, count: int):
-        self.data[occurrence] += count
+        self.data[occurrence.term][occurrence.provenance] += count
 
     def get(self, occurrence: Occurrence) -> int:
-        return self.data[occurrence]
+        return self.data[occurrence.term][occurrence.provenance]
 
     def __len__(self) -> int:
         return len(self.data)
