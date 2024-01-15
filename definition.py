@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Tuple, Any, Iterator
+from typing import Optional, List, Tuple, Any
 from zipfile import ZipFile, ZIP_DEFLATED
 import json
 import unittest
@@ -135,22 +135,6 @@ class TestDefinition(unittest.TestCase):
         self.assertNotEqual(hash(a), hash(b))
 
 
-@dataclass
-class Dictionary:
-    title: str
-    revision: str
-    data: List[Definition]
-
-    def __iter__(self) -> Iterator[Definition]:
-        return iter(self.data)
-
-    def __len__(self) -> int:
-        return len(self.data)
-
-    def writer(self) -> "DictionaryWriter":
-        return DictionaryWriter(self)
-
-
 class DictionaryReader:
     path: str
 
@@ -161,16 +145,11 @@ class DictionaryReader:
         self.path = path
         return self
 
-    def read(self) -> Dictionary:
+    def read(self) -> List[Definition]:
         if not self.path:
             raise ValueError("Path required")
 
         with ZipFile(self.path, mode="r") as zip_file:
-            with zip_file.open("index.json") as f:
-                index = json.load(f)
-                title = index["title"]
-                revision = index["revision"]
-
             data = list()
             bank_files = [f for f in zip_file.namelist() if "term_bank" in f]
 
@@ -182,18 +161,30 @@ class DictionaryReader:
                         definition.term.with_default_reading()
                         data.append(definition)
 
-            return Dictionary(title, revision, data)
+            return data
 
 
 class DictionaryWriter:
-    dictionary: Dictionary
+    title: Optional[str]
+    revision: Optional[str]
     path: Optional[str]
     chunk_size: int
 
-    def __init__(self, dictionary: Dictionary):
-        self.dictionary = dictionary
+    def __init__(self, data: List[Definition]):
+        self.data = data
+        self.title = None
+        self.revision = None
+
         self.path = None
-        self.chunk_size = len(dictionary.data)
+        self.chunk_size = len(data)
+
+    def with_title(self, title: str) -> "DictionaryWriter":
+        self.title = title
+        return self
+
+    def with_revision(self, revision: str) -> "DictionaryWriter":
+        self.revision = revision
+        return self
 
     def with_path(self, path: str) -> "DictionaryWriter":
         self.path = path
@@ -204,20 +195,25 @@ class DictionaryWriter:
         return self
 
     def write(self):
+        if self.title is None:
+            raise ValueError("Title required")
+        if self.revision is None:
+            raise ValueError("Revision required")
         if self.path is None:
             raise ValueError("Path required")
 
         with ZipFile(self.path, mode="w", compresslevel=ZIP_DEFLATED) as zip_file:
             index_obj = {
-                "title": self.dictionary.title,
+                "title": self.title,
                 "format": 3,
-                "revision": self.dictionary.revision,
+                "revision": self.revision,
                 "sequenced": True,
             }
+
             json_str = json.dumps(index_obj, ensure_ascii=False)
             zip_file.writestr("index.json", json_str)
 
-            for i, definition in enumerate(self.dictionary.data):
+            for i, definition in enumerate(self.data):
                 if i % self.chunk_size == 0:
                     if i > 0:
                         j = i // self.chunk_size
@@ -233,19 +229,21 @@ class DictionaryWriter:
 
 class TestDictionary(unittest.TestCase):
     def test_read(self):
-        dictionary = DictionaryReader() \
+        data = DictionaryReader() \
             .with_path("../self-made-yomichan/新新明解.zip") \
             .read()
-        self.assertEquals(82414, len(dictionary))
+        self.assertEquals(82414, len(data))
 
-        abnormal = list(filter(lambda x: not x.is_normal(), iter(dictionary)))
-        self.assertEquals(0, len(abnormal))
+        for item in data:
+            self.assertTrue(item.is_normal())
 
     def test_read_write(self):
-        definitions = DictionaryReader() \
+        data = DictionaryReader() \
             .with_path("../self-made-yomichan/新新明解.zip") \
             .read()
-        definitions.writer() \
+        DictionaryWriter(data) \
+            .with_title("新新明解") \
+            .with_revision("超銀河版") \
             .with_path("shinmeikai.zip") \
             .in_chunks(10000) \
             .write()
