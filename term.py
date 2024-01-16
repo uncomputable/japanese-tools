@@ -51,6 +51,12 @@ class Term:
         else:
             return None
 
+    def update_kanji_repetition_marks(self) -> "Optional[Term]":
+        if "々" in self.text:
+            return self.without_kanji_repetition_marks()
+        else:
+            return self.with_kanji_repetition_marks()
+
 
 def add_repetition_marks(string: str, pattern: re.Pattern, mark: str) -> str:
     new_string = ""
