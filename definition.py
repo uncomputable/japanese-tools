@@ -165,6 +165,10 @@ class DictionaryReader:
 
 
 class DictionaryWriter:
+    data: List[Any]
+    """
+    List of values with a to_json method
+    """
     title: Optional[str]
     revision: Optional[str]
     author: Optional[str]
@@ -175,7 +179,12 @@ class DictionaryWriter:
     path: Optional[str]
     chunk_size: int
 
-    def __init__(self, data: List[Definition]):
+    format: int = 3
+    is_sequenced: bool = True
+    term_bank_name: str = "term_bank"
+    frequency_mode: Optional[str] = None
+
+    def __init__(self, data: List[Any]):
         self.data = data
         self.title = None
         self.revision = None
@@ -230,9 +239,9 @@ class DictionaryWriter:
         with ZipFile(self.path, mode="w", compresslevel=ZIP_DEFLATED) as zip_file:
             index_obj = {
                 "title": self.title,
-                "format": 3,
+                "format": self.format,
                 "revision": self.revision,
-                "sequenced": True,
+                "sequenced": self.is_sequenced,
             }
             if self.author is not None:
                 index_obj["author"] = self.author
@@ -242,22 +251,24 @@ class DictionaryWriter:
                 index_obj["description"] = self.description
             if self.attribution is not None:
                 index_obj["attribution"] = self.attribution
+            if self.frequency_mode is not None:
+                index_obj["frequencyMode"] = self.frequency_mode
 
             json_str = json.dumps(index_obj, ensure_ascii=False)
             zip_file.writestr("index.json", json_str)
 
-            for i, definition in enumerate(self.data):
+            for i, datum in enumerate(self.data):
                 if i % self.chunk_size == 0:
                     if i > 0:
                         j = i // self.chunk_size
 
-                        file_name = f"term_bank_{j}.json"
+                        file_name = f"f{self.term_bank_name}_{j}.json"
                         json_str = json.dumps(array_obj, sort_keys=True, ensure_ascii=False)
                         zip_file.writestr(file_name, json_str)
 
                     array_obj = list()
 
-                array_obj.append(definition.with_sequence(i).to_json())
+                array_obj.append(datum.to_json())
 
 
 class TestDictionary(unittest.TestCase):
