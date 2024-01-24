@@ -27,6 +27,15 @@ def get_level(term: Term) -> Optional[int]:
         return 0
     return None
 
+def tag_level(definition: Definition) -> Optional[str]:
+    level = get_level(definition.term)
+    if level is None:
+        return None
+    elif level > 0:
+        return f"N{level}"
+    else:
+        return "通常使用"
+
 
 class TestJlpt(unittest.TestCase):
     def test_get_level(self):
