@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Type
 from zipfile import ZipFile, ZIP_DEFLATED
 import json
 import unittest
@@ -135,8 +135,15 @@ class TestDefinition(unittest.TestCase):
         self.assertNotEqual(hash(a), hash(b))
 
 
+# TODO Read metadata such as title, revision and author?
 class DictionaryReader:
     path: str
+
+    term_bank_name: str = "term_bank"
+    datum_class: Type[Any] = Definition
+    """
+    Class type with a from_json method
+    """
 
     def __init__(self):
         self.path = ""
@@ -145,19 +152,19 @@ class DictionaryReader:
         self.path = path
         return self
 
-    def read(self) -> List[Definition]:
+    def read(self) -> List[Any]:
         if not self.path:
             raise ValueError("Path required")
 
         with ZipFile(self.path, mode="r") as zip_file:
             data = list()
-            bank_files = [f for f in zip_file.namelist() if "term_bank" in f]
+            bank_files = [f for f in zip_file.namelist() if self.term_bank_name in f]
 
             for file in bank_files:
                 with zip_file.open(file, "r") as f:
                     array_obj = json.load(f)
                     for definition_obj in array_obj:
-                        definition = Definition.from_json(definition_obj)
+                        definition = self.datum_class.from_json(definition_obj)
                         definition.term.with_default_reading()
                         data.append(definition)
 
