@@ -59,7 +59,15 @@ class OccurrenceBag:
     def __len__(self) -> int:
         return len(self.data)
 
-    def extend_conservative(self, other: "OccurrenceBag"):
+    def extend_overlap(self, other: "OccurrenceBag"):
+        """
+        Conservatively add counts from another bag.
+
+        Assume that textual sources of both bags overlap.
+        For each term and source, take the maximum count from either bag.
+
+        Counts too few occurrences if textual sources are actually distinct.
+        """
         for term in other.data:
             for source in other.data[term]:
                 total_count = max(self.data[term][source], other.data[term][source])
@@ -182,7 +190,7 @@ class TestOccurrenceBag(unittest.TestCase):
             .read()
         self.assertEqual(175634, len(occurrences))
 
-    def test_extend_conservative(self):
+    def test_extend_overlap(self):
         a = OccurrenceBag()
         a.insert(Occurrence(Term("ア", "あ"), "ある出所"), 10)
         a.insert(Occurrence(Term("イ", "い"), "ある出所"), 5)
@@ -191,7 +199,7 @@ class TestOccurrenceBag(unittest.TestCase):
         b.insert(Occurrence(Term("ア", "あ"), "ある出所"), 5)
         b.insert(Occurrence(Term("ア", "あ"), "違う出所"), 5)
 
-        a.extend_conservative(b)
+        a.extend_overlap(b)
         self.assertEqual(a.get(Occurrence(Term("ア", "あ"), "ある出所")), 10)
         self.assertEqual(a.get(Occurrence(Term("ア", "あ"), "違う出所")), 5)
         self.assertEqual(a.get(Occurrence(Term("イ", "い"), "ある出所")), 5)

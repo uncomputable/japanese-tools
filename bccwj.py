@@ -19,5 +19,5 @@ def read_bag(path_suw: str, path_luw: Optional[str] = None) -> OccurrenceBag:
             .with_reading_index(1) \
             .with_count_index(6) \
             .read()
-        bag.extend_conservative(other)
+        bag.extend_overlap(other)
     return bag
