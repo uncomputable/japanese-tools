@@ -73,6 +73,20 @@ class OccurrenceBag:
                 total_count = max(self.data[term][source], other.data[term][source])
                 self.data[term][source] = total_count
 
+    def extend_distinct(self, other: "OccurrenceBag"):
+        """
+        Boldly add counts from another bag.
+
+        Assume that textual sources of both bags are distinct.
+        For each term and source, take the sum the counts of both bags.
+
+        Counts too many occurrences if textual sources actually overlap.
+        """
+        for term in other.data:
+            for source in other.data[term]:
+                total_count = self.data[term][source] + other.data[term][source]
+                self.data[term][source] = total_count
+
     def to_counts(self) -> Dict[Term, int]:
         counts: Dict[Term, int] = defaultdict(int)
         for term in self.data:
