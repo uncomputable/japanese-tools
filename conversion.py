@@ -75,9 +75,9 @@ class TestConversion(unittest.TestCase):
         for pairs in [plain, dakuten, handakuten]:
             for pair in pairs:
                 hira, kata = pair[0], pair[1]
-                self.assertEquals(kata_to_hira(kata), hira)
-                self.assertEquals(hira_to_kata(hira), kata)
+                self.assertEqual(kata_to_hira(kata), hira)
+                self.assertEqual(hira_to_kata(hira), kata)
 
     def test_shin_kyu(self):
-        self.assertEquals(shin_to_kyu("旧字体"), "舊字體")
-        self.assertEquals(kyu_to_shin("舊字體"), "旧字体")
+        self.assertEqual(shin_to_kyu("旧字体"), "舊字體")
+        self.assertEqual(kyu_to_shin("舊字體"), "旧字体")
