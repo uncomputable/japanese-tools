@@ -58,49 +58,17 @@ class Definition:
         return self.definitions[0]
 
     def with_term(self, term: Term) -> "Definition":
-        return Definition(
-            term,
-            self.def_tags,
-            self.conjugation,
-            self.popularity,
-            self.definitions,
-            self.sequence_number,
-            self.top_tags
-        )
+        return dataclasses.replace(self, term=term)
 
     def with_sequence(self, sequence: int) -> "Definition":
-        return Definition(
-            self.term,
-            self.def_tags,
-            self.conjugation,
-            self.popularity,
-            self.definitions,
-            sequence,
-            self.top_tags
-        )
+        return dataclasses.replace(self, sequence_number=sequence)
 
     def with_popularity(self, popularity: int) -> "Definition":
-        return Definition(
-            self.term,
-            self.def_tags,
-            self.conjugation,
-            popularity,
-            self.definitions,
-            self.sequence_number,
-            self.top_tags
-        )
+        return dataclasses.replace(self, popularity=popularity)
 
     def add_def_tag(self, tag: str) -> "Definition":
         def_tags = f"{self.def_tags} {tag}" if self.def_tags else tag
-        return Definition(
-            self.term,
-            def_tags,
-            self.conjugation,
-            self.popularity,
-            self.definitions,
-            self.sequence_number,
-            self.top_tags
-        )
+        return dataclasses.replace(self, def_tags=def_tags)
 
     def is_normal(self) -> bool:
         return self.top_tags == "" and len(self.definitions) == 1
