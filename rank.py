@@ -2,8 +2,7 @@ from dataclasses import dataclass
 from typing import List, Any, Dict, Optional, Iterator, Callable
 import unittest
 
-import bccwj
-from definition import DictionaryWriter, DictionaryReader
+from dictionary import Dictionary, DictionaryReader
 from term import Term
 
 
@@ -38,16 +37,15 @@ class Rank:
             self.rank
         ]
 
+    @classmethod
+    def dictionary(cls, data: "List[Rank]") -> Dictionary:
+        return Dictionary(data, "term_meta_bank") \
+            .with_sequenced(False) \
+            .with_frequency_mode("rank-based")
 
-class TestRank(unittest.TestCase):
-    def test_impl(self):
-        a = Rank(Term("ア", "あ"), 0)
-        b = Rank(Term("ア", "あ"), 1)
-
-        self.assertEqual(a, a)
-        self.assertNotEqual(a, b)
-        self.assertEqual(hash(a), hash(a))
-        self.assertNotEqual(hash(a), hash(b))
+    @classmethod
+    def dictionary_reader(cls) -> DictionaryReader:
+        return DictionaryReader(Rank, "term_meta_bank")
 
 
 def from_counts(counts: Dict[Term, int]) -> Iterator[Rank]:
@@ -77,28 +75,30 @@ def copy_term(it: Iterator[Rank], f: Callable[[Term], Optional[Term]]) -> Iterat
             yield Rank(mapped_term, x.rank)
 
 
-class RankDictionaryReader(DictionaryReader):
-    term_bank_name = "term_meta_bank"
-    datum_class = Rank
+class TestRank(unittest.TestCase):
+    def test_impl(self):
+        a = Rank(Term("ア", "あ"), 0)
+        b = Rank(Term("ア", "あ"), 1)
 
+        self.assertEqual(a, a)
+        self.assertNotEqual(a, b)
+        self.assertEqual(hash(a), hash(a))
+        self.assertNotEqual(hash(a), hash(b))
 
-class RankDictionaryWriter(DictionaryWriter):
-    is_sequenced = False
-    term_bank_name = "term_meta_bank"
-    frequency_mode = "rank-based"
+    def test_read_dictionary(self):
+        dic = Rank.dictionary_reader() \
+            .with_path("../frequency-dict/BCCWJ.zip") \
+            .read()
+        self.assertEqual(dic.title, "書き言葉")
+        self.assertEqual(len(dic), 80000)
 
-
-class TestRankDictionary(unittest.TestCase):
-    def test_write(self):
-        bag = bccwj.read_bag("BCCWJ_frequencylist_suw_ver1_1.tsv")
-        it = from_counts(bag.to_counts())
-        it = below_max_rank(it, 80000)
-        it = copy_term(it, Term.update_kanji_repetition_marks)
-        data = list(it)
-        RankDictionaryWriter(data) \
-            .with_title("BCCWJ") \
+    def test_read_write_dictionary(self):
+        Rank.dictionary_reader() \
+            .with_path("../frequency-dict/BCCWJ.zip") \
+            .read() \
             .with_revision("超銀河版") \
             .with_author("グレン団") \
+            .writer() \
             .with_path("bccwj.zip") \
             .in_chunks(10000) \
             .write()

@@ -5,11 +5,12 @@ from typing import Optional, List
 import bccwj
 import iterator
 import jlpt
-from definition import DictionaryReader, Definition, DictionaryWriter
+from definition import Definition
+from dictionary import Dictionary
 from term import Term
 
-def read_dictionary(path: str) -> List[Definition]:
-    return DictionaryReader() \
+def read_dictionary(path: str) -> Dictionary:
+    return Definition.dictionary_reader() \
         .with_path(path) \
         .read()
 
@@ -46,11 +47,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    data = read_dictionary(args.path_in)
+    dic = read_dictionary(args.path_in)
     bag = bccwj.read_bag(args.path_suw, args.path_luw)
     counts = bag.to_counts()
 
-    it = iter(data)
+    it = iter(dic)
     it = iterator.definitions_and_counts(it, counts)
     it = iterator.sort_by_count(it)
     it = iterator.count_as_popularity(it)
@@ -62,11 +63,11 @@ if __name__ == "__main__":
     it = iterator.add_def_tag(it, jlpt.tag_level)
     it = iterator.map_term(it, remove_stars)
 
-    new_data = list(it)
-    DictionaryWriter(new_data) \
-        .with_path(args.path_out) \
-        .in_chunks(10000) \
+    Definition.dictionary(list(it)) \
         .with_title("新明解国語辞典") \
         .with_revision(f"次元突破版{datetime.today().isoformat()}") \
         .with_author("Yoga, uncomputable") \
+        .writer() \
+        .with_path(args.path_out) \
+        .in_chunks(10000) \
         .write()

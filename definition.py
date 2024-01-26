@@ -1,9 +1,9 @@
+import dataclasses
 from dataclasses import dataclass
-from typing import Optional, List, Tuple, Any, Type
-from zipfile import ZipFile, ZIP_DEFLATED
-import json
+from typing import List, Tuple, Any
 import unittest
 
+from dictionary import Dictionary, DictionaryReader
 from term import Term
 
 
@@ -91,6 +91,15 @@ class Definition:
             self.top_tags
         ]
 
+    @classmethod
+    def dictionary(cls, data: "List[Definition]") -> Dictionary:
+        return Dictionary(data, "term_bank") \
+            .with_sequenced(True)
+
+    @classmethod
+    def dictionary_reader(cls) -> DictionaryReader:
+        return DictionaryReader(Definition, "term_bank")
+
 
 class TestDefinition(unittest.TestCase):
     def test_impl(self):
@@ -102,168 +111,23 @@ class TestDefinition(unittest.TestCase):
         self.assertEqual(hash(a), hash(a))
         self.assertNotEqual(hash(a), hash(b))
 
-
-# TODO Read metadata such as title, revision and author?
-class DictionaryReader:
-    path: str
-
-    term_bank_name: str = "term_bank"
-    datum_class: Type[Any] = Definition
-    """
-    Class type with a from_json method
-    """
-
-    def __init__(self):
-        self.path = ""
-
-    def with_path(self, path: str) -> "DictionaryReader":
-        self.path = path
-        return self
-
-    def read(self) -> List[Any]:
-        if not self.path:
-            raise ValueError("Path required")
-
-        with ZipFile(self.path, mode="r") as zip_file:
-            data = list()
-            bank_files = [f for f in zip_file.namelist() if self.term_bank_name in f]
-
-            for file in bank_files:
-                with zip_file.open(file, "r") as f:
-                    array_obj = json.load(f)
-                    for definition_obj in array_obj:
-                        definition = self.datum_class.from_json(definition_obj)
-                        definition.term.with_default_reading()
-                        data.append(definition)
-
-            return data
-
-
-class DictionaryWriter:
-    data: List[Any]
-    """
-    List of values with a to_json method
-    """
-    title: Optional[str]
-    revision: Optional[str]
-    author: Optional[str]
-    url: Optional[str]
-    description: Optional[str]
-    attribution: Optional[str]
-
-    path: Optional[str]
-    chunk_size: int
-
-    format: int = 3
-    is_sequenced: bool = True
-    term_bank_name: str = "term_bank"
-    frequency_mode: Optional[str] = None
-
-    def __init__(self, data: List[Any]):
-        self.data = data
-        self.title = None
-        self.revision = None
-        self.author = None
-        self.url = None
-        self.description = None
-        self.attribution = None
-
-        self.path = None
-        self.chunk_size = len(data)
-
-    def with_title(self, title: str) -> "DictionaryWriter":
-        self.title = title
-        return self
-
-    def with_revision(self, revision: str) -> "DictionaryWriter":
-        self.revision = revision
-        return self
-
-    def with_author(self, author: str) -> "DictionaryWriter":
-        self.author = author
-        return self
-
-    def with_url(self, url: str) -> "DictionaryWriter":
-        self.url = url
-        return self
-
-    def with_description(self, description: str) -> "DictionaryWriter":
-        self.description = description
-        return self
-
-    def with_attribution(self, attribution: str) -> "DictionaryWriter":
-        self.attribution = attribution
-        return self
-
-    def with_path(self, path: str) -> "DictionaryWriter":
-        self.path = path
-        return self
-
-    def in_chunks(self, chunk_size: int) -> "DictionaryWriter":
-        self.chunk_size = chunk_size
-        return self
-
-    def write(self):
-        if self.title is None:
-            raise ValueError("Title required")
-        if self.revision is None:
-            raise ValueError("Revision required")
-        if self.path is None:
-            raise ValueError("Path required")
-
-        with ZipFile(self.path, mode="w", compresslevel=ZIP_DEFLATED) as zip_file:
-            index_obj = {
-                "title": self.title,
-                "format": self.format,
-                "revision": self.revision,
-                "sequenced": self.is_sequenced,
-            }
-            if self.author is not None:
-                index_obj["author"] = self.author
-            if self.url is not None:
-                index_obj["url"] = self.url
-            if self.description is not None:
-                index_obj["description"] = self.description
-            if self.attribution is not None:
-                index_obj["attribution"] = self.attribution
-            if self.frequency_mode is not None:
-                index_obj["frequencyMode"] = self.frequency_mode
-
-            json_str = json.dumps(index_obj, ensure_ascii=False)
-            zip_file.writestr("index.json", json_str)
-
-            for i, datum in enumerate(self.data):
-                if i % self.chunk_size == 0:
-                    if i > 0:
-                        j = i // self.chunk_size
-
-                        file_name = f"f{self.term_bank_name}_{j}.json"
-                        json_str = json.dumps(array_obj, sort_keys=True, ensure_ascii=False)
-                        zip_file.writestr(file_name, json_str)
-
-                    array_obj = list()
-
-                array_obj.append(datum.to_json())
-
-
-class TestDictionary(unittest.TestCase):
-    def test_read(self):
-        data = DictionaryReader() \
+    def test_read_dictionary(self):
+        dic = Definition.dictionary_reader() \
             .with_path("../self-made-yomichan/新新明解.zip") \
             .read()
-        self.assertEquals(82414, len(data))
+        self.assertEqual(dic.title, "新明解国語辞典 第五版")
+        self.assertEqual(len(dic), 82414)
 
-        for item in data:
+        for item in dic:
             self.assertTrue(item.is_normal())
 
-    def test_read_write(self):
-        data = DictionaryReader() \
+    def test_read_write_dictionary(self):
+        Definition.dictionary_reader() \
             .with_path("../self-made-yomichan/新新明解.zip") \
-            .read()
-        DictionaryWriter(data) \
-            .with_title("新新明解") \
+            .read() \
             .with_revision("超銀河版") \
             .with_author("グレン団") \
+            .writer() \
             .with_path("shinmeikai.zip") \
             .in_chunks(10000) \
             .write()
