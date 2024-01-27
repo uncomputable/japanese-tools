@@ -2,6 +2,7 @@
 .idea/
 __pycache__/
 venv/
+CACHEDIR.TAG
 
 # Frequency lists
 *.zip
