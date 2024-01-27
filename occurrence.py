@@ -1,9 +1,10 @@
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional, List, Dict
+from zipfile import ZipFile
 import unittest
-import conversion
 
+import conversion
 from term import Term
 
 
@@ -96,31 +97,18 @@ class OccurrenceBag:
 
 
 class OccurrenceReader:
-    zip_path: str
-    """
-    Path to zip file.
-    """
-    path: str
-    """
-    Path to plain text file.
-
-    If zip path is nonempty, then this path lives inside the zip file.
-    """
-    separator: str
-    text_index: Optional[int]
-    reading_index: Optional[int]
-    count_index: Optional[int]
+    zip_path: Optional[str] = None
+    paths: List[str]
+    separator: Optional[str] = None
+    text_index: Optional[int] = None
+    reading_index: Optional[int] = None
+    count_index: Optional[int] = None
     provenance_indices: List[int]
     skip_lines: int
     encoding: str
 
     def __init__(self):
-        self.zip_path = ""
-        self.path = ""
-        self.separator = ""
-        self.text_index = None
-        self.reading_index = None
-        self.count_index = None
+        self.paths = []
         self.provenance_indices = []
         self.skip_lines = 0
         self.encoding = "utf-8"
@@ -129,8 +117,8 @@ class OccurrenceReader:
         self.zip_path = zip_path
         return self
 
-    def with_path(self, path: str) -> "OccurrenceReader":
-        self.path = path
+    def add_path(self, path: str) -> "OccurrenceReader":
+        self.paths.append(path)
         return self
 
     def with_separator(self, separator: str) -> "OccurrenceReader":
@@ -162,7 +150,7 @@ class OccurrenceReader:
         return self
 
     def read(self) -> OccurrenceBag:
-        if not self.path:
+        if len(self.paths) == 0:
             raise ValueError("Path required")
         if not self.separator:
             raise ValueError("Separator required")
@@ -175,29 +163,47 @@ class OccurrenceReader:
 
         bag = OccurrenceBag()
 
-        with open(self.path, "r", encoding=self.encoding) as f:
-            for (line_index, line) in enumerate(f):
-                if line_index < self.skip_lines:
-                    continue
-
-                split_line = line.split(self.separator)
-
-                text = split_line[self.text_index]
-                reading = conversion.kata_to_hira(split_line[self.reading_index])
-                term = Term(text, reading).with_default_reading()
-                provenance = ",".join(map(lambda index: split_line[index], self.provenance_indices))
-                occurrence = Occurrence(term, provenance)
-                count = int(split_line[self.count_index])
-                bag.insert(occurrence, count)
+        if self.zip_path is not None:
+            with ZipFile(self.zip_path, mode="r") as zip_file:
+                for path in self.paths:
+                    with zip_file.open(path, "r") as f:
+                        content = f.read().decode(self.encoding)
+                        self.update_bag(content, bag)
+        else:
+            for path in self.paths:
+                with open(path, "r", encoding=self.encoding) as f:
+                    content = f.read()
+                    self.update_bag(content, bag)
 
         return bag
+
+    def update_bag(self, content: str, bag: OccurrenceBag):
+        assert self.text_index is not None
+        assert self.reading_index is not None
+        assert self.count_index is not None
+
+        for (line_index, line) in enumerate(content.splitlines()):
+            if line_index < self.skip_lines:
+                continue
+
+            split_line = line.split(self.separator)
+
+            text = split_line[self.text_index]
+            reading = conversion.kata_to_hira(split_line[self.reading_index])
+            term = Term(text, reading).with_default_reading()
+            provenance = ",".join(map(lambda index: split_line[index], self.provenance_indices))
+            occurrence = Occurrence(term, provenance)
+            count = int(split_line[self.count_index])
+            bag.insert(occurrence, count)
 
 
 class TestOccurrenceBag(unittest.TestCase):
     def test_read(self):
         occurrences = OccurrenceReader() \
-            .with_path("BCCWJ_frequencylist_suw_ver1_1.tsv") \
+            .with_zip_path("../data/BCCWJ_frequencylist_suw_ver1_1.zip") \
+            .add_path("BCCWJ_frequencylist_suw_ver1_1.tsv") \
             .with_separator("\t") \
+            .with_skip_lines(1) \
             .with_text_index(2) \
             .with_reading_index(1) \
             .with_count_index(6) \
