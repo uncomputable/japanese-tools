@@ -31,5 +31,5 @@ def read_bag(zip_dir_path: str) -> OccurrenceBag:
     suw_bag = read_suw_bag(zip_dir_path)
     luw_bag = read_luw2_bag(zip_dir_path)
     if luw_bag is not None:
-        suw_bag.extend_overlap(luw_bag)
-    return suw_bag
+        luw_bag.extend_overlap(suw_bag)
+    return luw_bag
