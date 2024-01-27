@@ -149,6 +149,12 @@ class OccurrenceReader:
         self.encoding = encoding
         return self
 
+    def maybe_read(self) -> Optional[OccurrenceBag]:
+        try:
+            return self.read()
+        except FileNotFoundError:
+            return None
+
     def read(self) -> OccurrenceBag:
         if len(self.paths) == 0:
             raise ValueError("Path required")
