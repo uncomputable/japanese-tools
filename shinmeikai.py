@@ -42,13 +42,12 @@ if __name__ == "__main__":
 
     parser.add_argument("path_in", type=str, help="Path to input dictionary")
     parser.add_argument("path_out", type=str, help="Path of output dictionary")
-    parser.add_argument("path_suw", type=str, help="Path to BCCWJ_frequencylist_suw_ver1_1.zip")
-    parser.add_argument("path_luw", nargs="?", type=str, help="Path to BCCWJ_frequencylist_luw2_ver1_1.zip")
+    parser.add_argument("path_bccwj", type=str, help="Path to directory with BCCWJ zip files")
 
     args = parser.parse_args()
 
     dic = read_dictionary(args.path_in)
-    bag = bccwj.read_bag(args.path_suw, args.path_luw)
+    bag = bccwj.read_bag(args.path_bccwj)
     counts = bag.to_counts()
 
     it = iter(dic)

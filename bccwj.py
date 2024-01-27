@@ -1,10 +1,12 @@
+import os
 from typing import Optional
 
 from occurrence import OccurrenceBag, OccurrenceReader
 
-def read_bag(zip_path_suw: str, zip_path_luw: Optional[str] = None) -> OccurrenceBag:
-    bag = OccurrenceReader() \
-        .with_zip_path(zip_path_suw) \
+def read_suw_bag(zip_dir_path: str) -> OccurrenceBag:
+    zip_path = os.path.join(zip_dir_path, "BCCWJ_frequencylist_suw_ver1_1.zip")
+    return OccurrenceReader() \
+        .with_zip_path(zip_path) \
         .add_path("BCCWJ_frequencylist_suw_ver1_1.tsv") \
         .with_separator("\t") \
         .with_skip_lines(1) \
@@ -12,15 +14,22 @@ def read_bag(zip_path_suw: str, zip_path_luw: Optional[str] = None) -> Occurrenc
         .with_reading_index(1) \
         .with_count_index(6) \
         .read()
-    if zip_path_luw:
-        other = OccurrenceReader() \
-            .with_zip_path(zip_path_luw) \
-            .add_path("BCCWJ_frequencylist_luw2_ver1_1.tsv") \
-            .with_separator("\t") \
-            .with_skip_lines(1) \
-            .with_text_index(2) \
-            .with_reading_index(1) \
-            .with_count_index(6) \
-            .read()
-        bag.extend_overlap(other)
-    return bag
+
+def read_luw2_bag(zip_dir_path: str) -> Optional[OccurrenceBag]:
+    zip_path = os.path.join(zip_dir_path, "BCCWJ_frequencylist_luw2_ver1_1.zip")
+    return OccurrenceReader() \
+        .with_zip_path(zip_path) \
+        .add_path("BCCWJ_frequencylist_luw2_ver1_1.tsv") \
+        .with_separator("\t") \
+        .with_skip_lines(1) \
+        .with_text_index(2) \
+        .with_reading_index(1) \
+        .with_count_index(6) \
+        .maybe_read()
+
+def read_bag(zip_dir_path: str) -> OccurrenceBag:
+    suw_bag = read_suw_bag(zip_dir_path)
+    luw_bag = read_luw2_bag(zip_dir_path)
+    if luw_bag is not None:
+        suw_bag.extend_overlap(luw_bag)
+    return suw_bag
