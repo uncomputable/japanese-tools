@@ -42,8 +42,8 @@ if __name__ == "__main__":
 
     parser.add_argument("path_in", type=str, help="Path to input dictionary")
     parser.add_argument("path_out", type=str, help="Path of output dictionary")
-    parser.add_argument("path_suw", type=str, help="Path to BCCWJ_frequencylist_suw_ver1_1.tsv")
-    parser.add_argument("path_luw", nargs="?", type=str, help="Path to BCCWJ_frequencylist_luw2_ver1_1.tsv")
+    parser.add_argument("path_suw", type=str, help="Path to BCCWJ_frequencylist_suw_ver1_1.zip")
+    parser.add_argument("path_luw", nargs="?", type=str, help="Path to BCCWJ_frequencylist_luw2_ver1_1.zip")
 
     args = parser.parse_args()
 
