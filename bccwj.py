@@ -1,4 +1,5 @@
 import os
+import unittest
 from typing import Optional
 
 from occurrence import OccurrenceBag, OccurrenceReader
@@ -33,3 +34,13 @@ def read_bag(zip_dir_path: str) -> OccurrenceBag:
     if luw_bag is not None:
         luw_bag.extend_overlap(suw_bag)
     return luw_bag
+
+
+class TestBCCWJ(unittest.TestCase):
+    def test_read_suw(self):
+        suw_bag = read_suw_bag("../data")
+        self.assertEqual(175634, len(suw_bag))
+
+    def test_read_luw2(self):
+        luw_bag = read_luw2_bag("../data")
+        self.assertEqual(824690, len(luw_bag))
