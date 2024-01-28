@@ -1,13 +1,14 @@
 import argparse
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional
 
 import bccwj
-import iterator
+import definition
 import jlpt
 from definition import Definition
 from dictionary import Dictionary
 from term import Term
+
 
 def read_dictionary(path: str) -> Dictionary:
     return Definition.dictionary_reader() \
@@ -37,6 +38,7 @@ def remove_stars(term: Term) -> Term:
 
     return Term(text, reading)
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upgrade 新明解国語辞典")
 
@@ -51,16 +53,16 @@ if __name__ == "__main__":
     counts = bag.to_counts()
 
     it = iter(dic)
-    it = iterator.definitions_and_counts(it, counts)
-    it = iterator.sort_by_count(it)
-    it = iterator.count_as_popularity(it)
-    it = iterator.only_definitions(it)
-    it = iterator.position_as_sequence(it)
-    it = iterator.sort_by_term(it)
-    it = iterator.copy_term(it, Term.update_kanji_repetition_marks)
-    it = iterator.add_def_tag(it, tag_importance)
-    it = iterator.add_def_tag(it, jlpt.tag_level)
-    it = iterator.map_term(it, remove_stars)
+    it = definition.with_counts(it, counts)
+    it = definition.sort_by_count(it)
+    it = definition.count_as_popularity(it)
+    it = definition.only_definitions(it)
+    it = definition.position_as_sequence(it)
+    it = definition.sort_by_term(it)
+    it = definition.copy_term(it, Term.update_kanji_repetition_marks)
+    it = definition.add_def_tag(it, tag_importance)
+    it = definition.add_def_tag(it, jlpt.tag_level)
+    it = definition.map_term(it, remove_stars)
 
     Definition.dictionary(list(it)) \
         .with_title("新明解国語辞典") \
