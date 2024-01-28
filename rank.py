@@ -112,6 +112,27 @@ class TestRank(unittest.TestCase):
         self.assertEqual(hash(a), hash(a))
         self.assertNotEqual(hash(a), hash(b))
 
+    def test_from_json(self):
+        rank = Rank(Term("ア", "ア"), 0)
+        serializations = [
+            '["ア","freq",0]',
+            '["ア","freq",{"value":0}]',
+            '["ア","freq",{"value":0,"displayValue":"zero"}]',
+            '["ア","freq",{"frequency":0}]',  # illegal by schema, but occurs in the wild
+            '["ア","freq",{"reading":"ア","frequency":0}]',
+            '["ア","freq",{"reading":"ア","frequency":{"value":0}}]',
+            '["ア","freq",{"reading":"ア","frequency":{"value":0,"displayValue":"zero"}}]',
+        ]
+
+        for s in serializations:
+            obj = json.loads(s)
+            self.assertEqual(rank, Rank.from_json(obj))
+
+    def test_json_roundtrip(self):
+        rank = Rank(Term("ア", "あ"), 0)
+        s = rank.to_json()
+        self.assertEqual(rank, Rank.from_json(s))
+
     def test_read_dictionary(self):
         dic = Rank.dictionary_reader() \
             .with_path("../frequency-dict/BCCWJ.zip") \
