@@ -24,6 +24,9 @@ class Dictionary:
     def __len__(self) -> int:
         return len(self.data)
 
+    def with_data_same_type(self, data: List[Any]) -> "Dictionary":
+        return dataclasses.replace(self, data=data)
+
     def with_title(self, title: Optional[str]) -> "Dictionary":
         return dataclasses.replace(self, title=title)
 
