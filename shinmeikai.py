@@ -47,7 +47,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     dic = read_dictionary(args.path_in)
-    bag = bccwj.read_bag(args.path_bccwj)
+    bag, includes_luw = bccwj.read_bag(args.path_bccwj)
     counts = bag.to_counts()
 
     it = iter(dic)
