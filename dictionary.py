@@ -142,15 +142,9 @@ class DictionaryWriter:
             json_str = json.dumps(index_obj, ensure_ascii=False)
             zip_file.writestr("index.json", json_str)
 
-            for i, datum in enumerate(iter(self.dictionary)):
-                if i % self.chunk_size == 0:
-                    if i > 0:
-                        j = i // self.chunk_size
-
-                        file_name = f"f{self.dictionary.term_bank_name}_{j}.json"
-                        json_str = json.dumps(array_obj, sort_keys=True, ensure_ascii=False)
-                        zip_file.writestr(file_name, json_str)
-
-                    array_obj = list()
-
-                array_obj.append(datum.to_json())
+            for chunk_index, data_index in enumerate(range(0, len(self.dictionary), self.chunk_size)):
+                chunk = self.dictionary.data[data_index:data_index + self.chunk_size]
+                chunk_obj = [x.to_json() for x in chunk]
+                file_name = f"{self.dictionary.term_bank_name}_{chunk_index}.json"
+                json_str = json.dumps(chunk_obj, sort_keys=True, ensure_ascii=False)
+                zip_file.writestr(file_name, json_str)
