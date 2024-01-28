@@ -211,6 +211,11 @@ def add_def_tag(it: Iterator[Definition], f: Callable[[Definition], Optional[str
         else:
             yield x
 
+def filter_definition(it: Iterator[Definition], f: Callable[[str], bool]) -> Iterator[Definition]:
+    for x in it:
+        if f(x.get_definition()):
+            yield x
+
 
 class TestDefinition(unittest.TestCase):
     def test_impl(self):
