@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 from typing import List, Any, Dict, Optional, Iterator, Callable
 import unittest
@@ -26,15 +27,41 @@ class Rank:
         return f"{self.term}#{self.rank}"
 
     @classmethod
-    def from_json(cls, obj: List[Any]) -> "Rank":
-        text, reading, rank = obj
+    def from_json(cls, obj: Any) -> "Rank":
+        text, mode, second_obj = obj
+        assert isinstance(text, str)
+        assert mode == "freq"
+
+        def parse_frequency(obj_: Any) -> int:
+            if isinstance(obj_, int):
+                return int(obj_)
+            elif isinstance(obj_, dict):
+                return int(obj_["value"])
+            else:
+                assert isinstance(obj_, str)
+                raise ValueError("Cannot parse frequency in string format")
+
+        if isinstance(second_obj, dict) and "frequency" in second_obj:
+            if "reading" in second_obj:
+                reading = second_obj["reading"]
+            else:
+                reading = text
+            third_obj = second_obj["frequency"]
+            rank = parse_frequency(third_obj)
+        else:
+            reading = text
+            rank = parse_frequency(second_obj)
+
         return Rank(Term(text, reading), rank)
 
-    def to_json(self) -> List[Any]:
+    def to_json(self) -> Any:
         return [
             self.term.text,
-            self.term.reading,
-            self.rank
+            "freq",
+            {
+                "reading": self.term.reading,
+                "frequency": self.rank,
+            },
         ]
 
     @classmethod
