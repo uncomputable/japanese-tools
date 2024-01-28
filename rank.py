@@ -1,5 +1,7 @@
+import argparse
 import json
 from dataclasses import dataclass
+from datetime import date
 from typing import List, Any, Dict, Optional, Iterator, Callable
 import unittest
 
@@ -150,3 +152,28 @@ class TestRank(unittest.TestCase):
             .with_path("bccwj.zip") \
             .in_chunks(10000) \
             .write()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Convert frequency dictionary for Yomichan")
+
+    parser.add_argument("path_in", type=str, help="Path to input dictionary")
+    parser.add_argument("path_out", type=str, help="Path of output dictionary")
+    parser.add_argument("--max", type=int, default=80000, help="Maximum term frequency in output")
+
+    args = parser.parse_args()
+
+    dic = Rank.dictionary_reader() \
+        .with_path(args.path_in) \
+        .read()
+
+    it = iter(dic)
+    it = below_max_rank(it, args.max)
+    it = copy_term(it, Term.update_kanji_repetition_marks)
+
+    dic \
+        .with_data_same_type(list(it)) \
+        .with_revision(f"{dic.revision} converted {date.today().isoformat()}") \
+        .writer() \
+        .with_path(args.path_out) \
+        .write()
