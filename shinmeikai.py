@@ -17,10 +17,10 @@ def read_dictionary(zip_dir_path: str) -> Dictionary:
         .with_path(zip_path) \
         .read()
 
-def tag_importance(definition: Definition) -> Optional[str]:
-    if "⁑" in definition.get_definition():
+def tag_importance(x: Definition) -> Optional[str]:
+    if "⁑" in x.get_definition():
         return "最重要語"
-    if "⁎" in definition.get_definition():
+    if "⁎" in x.get_definition():
         return "重要語"
     else:
         return None
