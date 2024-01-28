@@ -1,5 +1,6 @@
 import argparse
-from datetime import datetime
+import os
+from datetime import date
 from typing import Optional
 
 import bccwj
@@ -10,9 +11,10 @@ from dictionary import Dictionary
 from term import Term
 
 
-def read_dictionary(path: str) -> Dictionary:
+def read_dictionary(zip_dir_path: str) -> Dictionary:
+    zip_path = os.path.join(zip_dir_path, "新明解国語辞典第五版v3.zip")
     return Definition.dictionary_reader() \
-        .with_path(path) \
+        .with_path(zip_path) \
         .read()
 
 def tag_importance(definition: Definition) -> Optional[str]:
@@ -40,9 +42,9 @@ def remove_stars(term: Term) -> Term:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Upgrade 新明解国語辞典")
+    parser = argparse.ArgumentParser(description="Upgrade Shinmeikai dictionary for Yomichan")
 
-    parser.add_argument("path_in", type=str, help="Path to input dictionary")
+    parser.add_argument("path_in", type=str, help="Path to directory with Shinmeikai dictionary")
     parser.add_argument("path_out", type=str, help="Path of output dictionary")
     parser.add_argument("path_bccwj", type=str, help="Path to directory with BCCWJ zip files")
 
@@ -66,7 +68,7 @@ if __name__ == "__main__":
 
     Definition.dictionary(list(it)) \
         .with_title("新明解国語辞典") \
-        .with_revision(f"次元突破版{datetime.today().isoformat()}") \
+        .with_revision(f"data v1997-11-03 yomi v{date.today().isoformat()}") \
         .with_author("Yoga, uncomputable") \
         .writer() \
         .with_path(args.path_out) \
