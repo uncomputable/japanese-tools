@@ -1,4 +1,6 @@
+import argparse
 import unittest
+import sys
 from typing import List
 
 KATAKANA = "ァアィイゥウェエォオカガキギクグケゲコゴサザシジスズセゼソゾタダチヂッツヅテデトドナニヌネノハバパヒビピフブプヘベペホボポマミムメモャヤュユョヨラリルレロヮワヰヱヲンヴヵヶヽヾ"
@@ -81,3 +83,26 @@ class TestConversion(unittest.TestCase):
     def test_shin_kyu(self):
         self.assertEqual(shin_to_kyu("旧字体"), "舊字體")
         self.assertEqual(kyu_to_shin("舊字體"), "旧字体")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Convert Japanese text")
+
+    to_group = parser.add_mutually_exclusive_group(required=True)
+    to_group.add_argument("--kata", action="store_true", help="Convert hiragana to katakana")
+    to_group.add_argument("--hira", action="store_true", help="Convert katakana to hiragana")
+    to_group.add_argument("--shin", action="store_true", help="Convert kyujitai to shinjitai")
+    to_group.add_argument("--kyu", action="store_true", help="Convert shinjitai to kyujitai")
+    parser.add_argument('text', nargs='?', default=sys.stdin.read(), help='Text to convert')
+
+    args = parser.parse_args()
+
+    if args.kata:
+        print(hira_to_kata(args.text))
+    elif args.hira:
+        print(kata_to_hira(args.text))
+    elif args.shin:
+        print(kyu_to_shin(args.text))
+    else:
+        assert args.kyu
+        print(shin_to_kyu(args.text))
